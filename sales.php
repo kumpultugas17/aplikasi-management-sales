@@ -19,7 +19,7 @@ session_start();
    <!-- Sweetalert -->
    <link rel="stylesheet" href="assets/sweetalert2/sweetalert2.min.css">
    <!-- jQuery -->
-   <script src="assets/js/jquery-3.7.1.min.js"></script>
+   <!-- <script src="assets/js/jquery-3.7.1.min.js"></script> -->
    <!-- My Style -->
    <link rel="stylesheet" href="assets/css/app.css">
    <style>
@@ -124,18 +124,6 @@ session_start();
                </div>
             </div>
 
-            <?php if (isset($_GET['msg']) and ($_GET['msg']) == 'success') { ?>
-               <div class="alert alert-success d-flex align-content-center">
-                  <i class="ti ti-circle-check fs-5 me-2"></i> Success! Data baru berhasil ditambahkan.
-               </div>
-            <?php } ?>
-
-            <?php if (isset($_GET['msg']) and ($_GET['msg']) == 'failed') { ?>
-               <div class="alert alert-danger d-flex align-content-center">
-                  <i class="ti ti-circle-x fs-5 me-2"></i> Failed! Data baru gagal ditambahkan.
-               </div>
-            <?php } ?>
-
             <div class="bg-white rounded-2 shadow-sm p-4 mb-4">
                <div class="row">
                   <div class="d-grid d-lg-block col-lg-5 col-xl-6 mb-4 mb-lg-0">
@@ -146,9 +134,9 @@ session_start();
                   </div>
                   <div class="col-lg-7 col-xl-6">
                      <!-- form pencarian -->
-                     <form action="#" method="GET">
+                     <form action="" method="GET">
                         <div class="input-group">
-                           <input type="text" name="search" class="form-control form-search py-2" placeholder="Search sales ..." autocomplete="off">
+                           <input type="text" name="search" class="form-control form-search py-2" placeholder="Search sales ..." autocomplete="off" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                            <button class="btn btn-primary py-2" type="submit">Search</button>
                         </div>
                      </form>
@@ -169,11 +157,34 @@ session_start();
                      </thead>
                      <tbody>
                         <?php
+                        // Connection Database
                         $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
+                        // Jumlah data per halaman
+                        $limit = 5;
+                        // Ambil halaman saat ini
+                        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                        $page = max($page, 1); // Halaman minimal adalah 1
+                        // Hitung offset
+                        $offset = ($page - 1) * $limit;
+                        // Ambil nilai pencarian
+                        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+                        // Bersihkan input untuk menghindari SQL injection
+                        $search_clean = htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
+                        // Tambahkan kondisi pencarian jika ada
+                        $search_condition = $search ? "WHERE name LIKE '%$search_clean%'" : "";
+                        // Hitung total hasil
+                        $total_results_query = "SELECT COUNT(*) AS total FROM sales $search_condition";
+                        $total_results_result = $conn->query($total_results_query);
+                        $total_results = $total_results_result->fetch_assoc()['total'];
+                        // Hitung total halaman
+                        $total_pages = ceil($total_results / $limit);
+                        // Query data dengan limit dan offset
+                        $query = "SELECT * FROM sales $search_condition LIMIT $limit OFFSET $offset";
+                        $result = $conn->query($query);
+
                         $no = 1;
-                        $query = $conn->query("SELECT * FROM sales");
-                        if ($query->num_rows > 0) {
-                           foreach ($query as $data) :
+                        if ($result->num_rows > 0) {
+                           foreach ($result as $data) :
                         ?>
                               <tr>
                                  <td width="30" class="text-center"><?= $no++ ?></td>
@@ -186,13 +197,42 @@ session_start();
                                        <i class="ti ti-edit"></i>
                                     </a>
                                     <!-- button modal hapus data -->
-                                    <button type="button" class="btn btn-danger btn-sm m-1" data-bs-toggle="modal" data-bs-target="" data-bs-tooltip="tooltip" data-bs-title="Delete">
+                                    <button type="button" class="btn btn-danger btn-sm m-1" data-bs-toggle="modal" data-bs-target="#modalHapus<?= $data['id'] ?>" data-bs-tooltip="tooltip" data-bs-title="Delete">
                                        <i class="ti ti-trash"></i>
                                     </button>
                                  </td>
                               </tr>
-                           <?php endforeach;
-                        } else { ?>
+
+                              <!-- Modal hapus data -->
+                              <div class="modal fade" id="modalHapus<?= $data['id'] ?>" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalDeleteLabel" aria-hidden="true">
+                                 <div class="modal-dialog">
+                                    <div class="modal-content">
+                                       <div class="modal-header">
+                                          <h1 class="modal-title fs-5" id="exampleModalLabel">
+                                             <i class="ti ti-trash me-2"></i> Delete Sales
+                                          </h1>
+                                       </div>
+                                       <div class="modal-body">
+                                          <!-- informasi data yang akan dihapus -->
+                                          <p class="mb-2">
+                                             Are you sure to delete <span class="fw-bold mb-2">
+                                                <?= $data['name'] ?>
+                                             </span>?
+                                          </p>
+                                       </div>
+                                       <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary py-2 px-3" data-bs-dismiss="modal">Cancel</button>
+                                          <form action="process-delete-sales.php" method="POST">
+                                             <input type="hidden" name="id_delete" value="<?= $data['id'] ?>">
+                                             <button type="submit" class="btn btn-danger py-2 px-3"> Yes, delete it! </button>
+                                          </form>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+
+                           <?php endforeach ?>
+                        <?php } else { ?>
                            <!-- jika data tidak ada, tampilkan pesan data tidak tersedia -->
                            <tr>
                               <td colspan="5">
@@ -203,38 +243,47 @@ session_start();
                               </td>
                            </tr>
                         <?php } ?>
-
-                        <!-- Modal hapus data -->
-                        <div class="modal fade" id="" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalDeleteLabel" aria-hidden="true">
-                           <div class="modal-dialog">
-                              <div class="modal-content">
-                                 <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="exampleModalLabel">
-                                       <i class="ti ti-trash me-2"></i> Delete Sales
-                                    </h1>
-                                 </div>
-                                 <div class="modal-body">
-                                    <!-- informasi data yang akan dihapus -->
-                                    <p class="mb-2">
-                                       Are you sure to delete <span class="fw-bold mb-2">$category->name</span>?
-                                    </p>
-                                 </div>
-                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary py-2 px-3" data-bs-dismiss="modal">Cancel</button>
-                                    button hapus data
-                                    <form action="route('categories.destroy', $category->id)" method="POST">
-                                       <button type="submit" class="btn btn-danger py-2 px-3"> Yes, delete it! </button>
-                                    </form>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-
                      </tbody>
                   </table>
                </div>
                <!-- pagination -->
+               <nav aria-label="..." class="px-0 mx-0">
+                  <?php if ($total_pages > 1) { ?>
+                     <ul class="pagination">
+                        <?php if ($page > 1) { ?>
+                           <li class="page-item">
+                              <a href="?search=<?= urlencode($search) ?>&page=<?= ($page - 1) ?>" class="page-link">Previous</a>
+                           </li>
+                        <?php } else { ?>
+                           <li class="page-item">
+                              <a href="?search=<?php urlencode($search) ?>&page=<?php ($page - 1) ?>" class="page-link">Previous</a>
+                           </li>
+                        <?php } ?>
 
+                        <?php for ($i = 1; $i <= $total_pages; $i++) { ?>
+                           <?php if ($i == $page) { ?>
+                              <li class="page-item active border-0">
+                                 <a class="page-link" href="?search=<?= urlencode($search) ?>&page=<?= $i ?>"><?= $i ?></a>
+                              </li>
+                           <?php   } else { ?>
+                              <li class="page-item">
+                                 <a class="page-link" href="?search=<?= urlencode($search) ?>&page=<?= $i ?>"><?= $i ?></a>
+                              </li>
+                           <?php } ?>
+                        <?php } ?>
+
+                        <?php if ($page < $total_pages) { ?>
+                           <li class="page-item">
+                              <a class="page-link" href="?search=<?= urlencode($search) ?>&page=<?= ($page + 1) ?>">Next</a>
+                           </li>
+                        <?php } else { ?>
+                           <li class="page-item disabled">
+                              <a class="page-link" href="?search=<?= urlencode($search) ?>&page=<?= ($page + 1) ?>">Next</a>
+                           </li>
+                        <?php } ?>
+                     </ul>
+                  <?php } ?>
+               </nav>
             </div>
          </div>
       </div>
