@@ -18,8 +18,6 @@ session_start();
    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
    <!-- Sweetalert -->
    <link rel="stylesheet" href="assets/sweetalert2/sweetalert2.min.css">
-   <!-- jQuery -->
-   <!-- <script src="assets/js/jquery-3.7.1.min.js"></script> -->
    <!-- My Style -->
    <link rel="stylesheet" href="assets/css/app.css">
    <style>
