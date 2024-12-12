@@ -1,8 +1,7 @@
 <?php
 session_start();
-if (!isset($_SESSION['login'])) {
-   header('location:login.php');
-}
+// Connection Database
+$conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,15 +11,21 @@ if (!isset($_SESSION['login'])) {
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="description" content="Aplikasi Menegement Sales">
    <meta name="author" content="M. Iqbal Adenan">
-   <title>Aplikasi Management Sales | Report</title>
+   <title>Aplikasi Management Sales | Sales</title>
    <!-- Bootstrap CSS -->
    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
    <!-- Tabler Icons CSS -->
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
    <!-- Gogole Font -->
    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+   <!-- Select 2 -->
+   <link rel="stylesheet" href="assets/select2/css/select2.min.css">
    <!-- Sweetalert -->
    <link rel="stylesheet" href="assets/sweetalert2/sweetalert2.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+   <!-- jQuery -->
+   <script src="assets/js/jquery-3.7.1.min.js"></script>
    <!-- My Style -->
    <link rel="stylesheet" href="assets/css/app.css">
    <style>
@@ -51,7 +56,7 @@ if (!isset($_SESSION['login'])) {
       <!-- Navbar Top -->
       <nav class="navbar navbar-top fixed-top bg-primary text-white">
          <div class="container">
-            <a href="#" class="d-inline navbar-brand text-white">
+            <a href="dashboard.php" class="d-inline navbar-brand text-white">
                <img src="assets/images/logo-dashboard.png" alt="Logo" width="32" class="align-text-bottom me-2">
                <span class="fs-4 text-uppercase">Apliaksi Management Sales</span>
             </a>
@@ -78,12 +83,12 @@ if (!isset($_SESSION['login'])) {
                      </a>
                   </li>
                   <li class="nav-item">
-                     <a href="transactions.php" class="nav-link text-nowrap me-3">
+                     <a href="transactions.php" class="nav-link text-nowrap me-3 active">
                         <i class="ti ti-shopping-cart-copy align-text-top me-1"></i> Transactions
                      </a>
                   </li>
                   <li class="nav-item">
-                     <a href="report.php" class="nav-link text-nowrap me-3 active">
+                     <a href="report.php" class="nav-link text-nowrap me-3">
                         <i class="ti ti-file-description align-text-top me-1"></i> Report
                      </a>
                   </li>
@@ -107,7 +112,7 @@ if (!isset($_SESSION['login'])) {
             <div class="d-flex flex-column flex-lg-row mb-2">
                <!-- Page Title -->
                <div class="flex-grow-1">
-                  <h5 class="page-title">Report Transactions</h5>
+                  <h5 class="page-title">Transactions</h5>
                </div>
                <div class="pt-lg-1">
                   <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
@@ -118,85 +123,59 @@ if (!isset($_SESSION['login'])) {
                            </a>
                         </li>
                         <li class="breadcrumb-item" aria-current="page">
-                           Report
+                           Create
                         </li>
                      </ol>
                   </nav>
                </div>
             </div>
 
-            <div class="bg-white rounded-2 shadow-sm p-4 mb-4">
-               <div class="row">
-                  <div class="d-grid d-lg-block col-lg-12 col-xl-7 mb-4 mb-lg-0">
-                     <!-- button form add data -->
-                     <form action="" method="get" class="d-flex gap-2 align-items-center">
-                        <input type="date" name="start_date" class="form-control py-2" required>
-                        <span>to</span>
-                        <input type="date" name="end_date" class="form-control py-2" required>
-                        <button type="submit" class="btn btn-primary py-2 px-2" style="width: 250px;">
-                           <i class="ti ti-search me-2"></i> Search
-                        </button>
-                     </form>
+            <div class="bg-white rounded-2 shadow-sm pt-4 px-4 pb-3 mb-5">
+               <!-- form -->
+               <form action="process-create-transaction.php" method="post">
+                  <div class="mb-3 row align-items-center">
+                     <label for="merk" class="col-sm-2 form-label">Sales Date</label>
+                     <div class="col-sm-10">
+                        <input type="date" name="sale_date" id="sale_date" class="datepicker" placeholder="Enter sale date" required>
+                     </div>
                   </div>
-               </div>
+                  <div class="mb-3 row align-items-center">
+                     <label for="model" class="col-sm-2 form-label">Sales Name</label>
+                     <div class="col-sm-10">
+                        <select name="sales_id" class="select2">
+                           <option value="">Choose Sales</option>
+                           <?php
+                           $sales = $conn->query("SELECT * FROM sales");
+                           foreach ($sales as $s) :
+                           ?>
+                              <option value="<?= $s['id'] ?>"><?= $s['name'] ?></option>
+                           <?php endforeach; ?>
+                        </select>
+                     </div>
+                  </div>
+                  <div class="mb-3 row align-items-center">
+                     <label for="cars_name" class="col-sm-2 form-label">Cars Name</label>
+                     <div class="col-sm-10">
+                        <select name="car_id" class="select2">
+                           <option value="">Choose Car</option>
+                           <?php
+                           $cars = $conn->query("SELECT * FROM cars");
+                           foreach ($cars as $c) :
+                           ?>
+                              <option value="<?= $c['id'] ?>"><?= $c['merk'] . ' ' . $c['model'] . ' ' . $c['tahun']  ?></option>
+                           <?php endforeach; ?>
+                        </select>
+                     </div>
+                  </div>
+                  <div class="d-grid gap-3 d-sm-flex justify-content-md-start pt-1 offset-lg-2 offset-md-2">
+                     <button type="submit" class="btn btn-primary py-2 px-4" style="margin-left: 3px">Save</button>
+                     <a href="transactions.php" class="btn btn-outline-secondary py-2 px-3">Cancel</a>
+                  </div>
+
+               </form>
+               <!-- end form -->
             </div>
 
-            <?php if (isset($_GET['start_date']) && $_GET['end_date'] !== '') { ?>
-               <div class="bg-white rounded-2 shadow-sm pt-4 px-4 ">
-                  <!-- tabel tampil data -->
-                  <div class="table-responsive mb-3">
-                     <table class="table table-bordered table-striped table-hover" style="width:100%">
-                        <thead>
-                           <th class="text-center">No.</th>
-                           <th class="text-center">Sale Date</th>
-                           <th class="text-center">Sales Name</th>
-                           <th class="text-center">Merk/Model</th>
-                           <th class="text-center">Price</th>
-                        </thead>
-                        <tbody>
-                           <?php
-                           // Connection Database
-                           $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
-                           // Ambil nilai pencarian
-                           $start_date = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
-                           $end_date = isset($_GET['end_date']) ? trim($_GET['end_date']) : '';
-                           // Bersihkan input untuk menghindari SQL injection
-                           $start_date_clean = htmlspecialchars($start_date, ENT_QUOTES, 'UTF-8');
-                           $end_date_clean = htmlspecialchars($end_date, ENT_QUOTES, 'UTF-8');
-                           // Tambahkan kondisi pencarian jika ada
-                           $search_condition = $start_date || $end_date ? "WHERE sale_date BETWEEN '$start_date_clean' AND '$end_date_clean'" : "";
-                           // Query data dengan limit dan offset
-                           $query = "SELECT * FROM transactions INNER JOIN sales ON transactions.sales_id = sales.id INNER JOIN cars ON transactions.car_id = cars.id $search_condition";
-                           $result = $conn->query($query);
-
-                           $no = 1;
-                           if ($result->num_rows > 0) {
-                              foreach ($result as $data) :
-                           ?>
-                                 <tr>
-                                    <td width="30" class="text-center"><?= $no++ ?></td>
-                                    <td width="200"><?= $data['sale_date'] ?></td>
-                                    <td width="200"><?= $data['name'] ?></td>
-                                    <td width="200"><?= $data['merk'] . ' ' . $data['model'] . ' ' . $data['tahun'] ?></td>
-                                    <td width="200"><?= $data['harga'] ?></td>
-                                 </tr>
-                              <?php endforeach ?>
-                           <?php } else { ?>
-                              <!-- jika data tidak ada, tampilkan pesan data tidak tersedia -->
-                              <tr>
-                                 <td colspan="5">
-                                    <div class="d-flex justify-content-center align-items-center">
-                                       <i class="ti ti-info-circle fs-5 me-2"></i>
-                                       <div>No data available.</div>
-                                    </div>
-                                 </td>
-                              </tr>
-                           <?php } ?>
-                        </tbody>
-                     </table>
-                  </div>
-               </div>
-            <?php } ?>
          </div>
       </div>
    </main>
@@ -221,6 +200,9 @@ if (!isset($_SESSION['login'])) {
    <script src="assets/js/bootstrap.bundle.min.js"></script>
    <!-- Sweetalert -->
    <script src="assets/sweetalert2/sweetalert2.all.min.js"></script>
+   <!-- Select 2 -->
+   <script src="assets/select2/js/select2.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
    <!-- Pesan Berhasil -->
    <?php if (isset($_SESSION['success'])) { ?>
       <script>
@@ -247,6 +229,18 @@ if (!isset($_SESSION['login'])) {
       </script>
    <?php }
    unset($_SESSION['failed']);  ?>
+   <script>
+      $(document).ready(function() {
+         $('.select2').select2();
+
+         flatpickr(".datepicker", {
+            altInput: true,
+            altFormat: "j F Y",
+            dateFormat: "Y-m-d",
+            disableMobile: "true"
+         });
+      });
+   </script>
 </body>
 
 </html>

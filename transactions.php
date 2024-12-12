@@ -1,5 +1,8 @@
 <?php
 session_start();
+if (!isset($_SESSION['login'])) {
+   header('location:login.php');
+}
 // Connection Database
 $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
 ?>
@@ -109,6 +112,7 @@ $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
                <div class="flex-grow-1">
                   <h5 class="page-title">Transactions</h5>
                </div>
+
                <div class="pt-lg-1">
                   <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                      <ol class="breadcrumb">
@@ -130,8 +134,11 @@ $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
                   <div class="d-grid d-lg-block col-lg-5 col-xl-6 mb-4 mb-lg-0">
                      <!-- button modal add transaction -->
                      <button type="button" data-bs-toggle="modal" data-bs-target="#modalAdd" class="btn btn-primary py-2 px-3">
-                        <i class="ti ti-plus me-2"></i> Add Transactions
+                        <i class="ti ti-plus me-2"></i> Add Transactions Modal
                      </button>
+                     <a href="transactions-create.php" class="btn btn-primary py-2 px-3">
+                        <i class="ti ti-plus me-2"></i> Add Transactions
+                     </a>
                      <!-- form modal add transaction -->
                      <div class="modal fade" id="modalAdd" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalAddLabel" aria-hidden="true">
                         <div class="modal-dialog">
@@ -151,12 +158,13 @@ $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
                                     <div class="mb-3">
                                        <label for="sales_id" class="form-label">Sales</label>
 
-                                       <select name="sales_id" id="sales_id" class="form-select2">
+                                       <select name="sales_id" class="form-select2">
+                                          <option value="">Choose Sales</option>
                                           <?php
-                                          $sales = $conn->query("SELECT * FROM sales");
-                                          foreach ($sales as $s) :
+                                          $cars = $conn->query("SELECT * FROM sales");
+                                          foreach ($cars as $c) :
                                           ?>
-                                             <option value="<?= $s['id'] ?>"><?= $s['name'] ?></option>
+                                             <option value="<?= $c['id'] ?>"><?= $c['name'] ?></option>
                                           <?php endforeach; ?>
                                        </select>
 
@@ -390,9 +398,20 @@ $conn = mysqli_connect('localhost', 'root', '', 'db_mik1_sales_car');
    <?php }
    unset($_SESSION['failed']);  ?>
    <script>
-      $(document).ready(function() {
-         $('.form-select2').select2();
-      });
+      // select2
+      $('.form-select2').each(function() {
+         $(this).select2({
+            // fix select2 search input focus bug
+            dropdownParent: $(this).parent(),
+         })
+      })
+
+      // fix select2 bootstrap modal scroll bug
+      $(document).on('select2:close', '.form-select2', function(e) {
+         var evt = "scroll.select2"
+         $(e.target).parents().off(evt)
+         $(window).off(evt)
+      })
    </script>
 </body>
 

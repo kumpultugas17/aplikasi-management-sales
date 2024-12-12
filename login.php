@@ -1,3 +1,7 @@
+<?php
+session_start();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,6 +15,8 @@
    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
    <!-- Gogole Font -->
    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+   <!-- Sweetalert -->
+   <link rel="stylesheet" href="assets/sweetalert2/sweetalert2.min.css">
    <!-- My Style -->
    <style>
       * {
@@ -47,17 +53,19 @@
             <div class="card px-3 py-4">
                <div class="card-body">
                   <h3 class="text-center fw-bold mb-4">Login Aplikasi</h3>
-                  <div class="mb-3">
-                     <label for="email" class="form-label">Email</label>
-                     <input type="email" name="email" id="email" class="form-control">
-                  </div>
-                  <div class="mb-5">
-                     <label for="password" class="form-label">Password</label>
-                     <input type="password" name="password" id="password" class="form-control">
-                  </div>
-                  <div class="d-grid">
-                     <button type="submit" class="btn btn-primary">Login</button>
-                  </div>
+                  <form action="" method="post">
+                     <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" name="email" id="email" class="form-control">
+                     </div>
+                     <div class="mb-5">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" name="password" id="password" class="form-control">
+                     </div>
+                     <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                     </div>
+                  </form>
                </div>
             </div>
          </div>
@@ -66,6 +74,40 @@
 
    <!-- Bootstrap JS -->
    <script src="assets/js/bootstrap.bundle.min.js"></script>
+   <!-- Sweetalert -->
+   <script src="assets/sweetalert2/sweetalert2.all.min.js"></script>
+   <?php if (isset($_SESSION['failed'])) { ?>
+      <script>
+         Swal.fire({
+            position: "top-end",
+            icon: "error",
+            title: "<?= $_SESSION['failed",'] ?>",
+            showConfirmButton: false,
+            timer: 1500
+         });
+      </script>
+   <?php }
+   unset($_SESSION['failed']);  ?>
 </body>
 
 </html>
+
+<?php
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+   $email = $_POST['email'];
+   $password = $_POST['password'];
+
+   if (empty($email) || empty($password)) {
+      $_SESSION['failed'] = 'Email dan Password tidak boleh kosong!';
+      exit;
+   }
+
+   if ($email == 'admin@mail.com' && $password == 'password') {
+      $_SESSION['login'] = true;
+      $_SESSION['success'] = 'Berhasil Login!';
+      header('location:dashboard.php');
+   } else {
+      $_SESSION['failed'] = 'Email atau Password salah!';
+   }
+}
+?>

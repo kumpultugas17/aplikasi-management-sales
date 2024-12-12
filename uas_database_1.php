@@ -102,6 +102,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
    $conn->query("UPDATE pemilih SET status = '1' WHERE id_pemilih = '$nama_pemilih'");
 
-   echo "<script>reload();</script>";
+   echo "<script>location.reload();</script>";
 }
 ?>
